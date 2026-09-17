@@ -8,12 +8,13 @@ import SettingsView from './components/SettingsView.vue'
 import UnitsView from './components/UnitsView.vue'
 import CategoriesView from './components/CategoriesView.vue'
 import MessageCenter from './ui/MessageCenter.vue'
+import Dialog from 'primevue/dialog'
 import { dateLabel, money, useWorkspace, type Page } from './workspace'
 
 const workspace = useWorkspace()
 const state = workspace.state
 const menuOpen = ref(false)
-const logoutDialog = ref<HTMLDialogElement>()
+const logoutDialog = ref(false)
 const pages: { id: Page; label: string; section: string }[] = [
   { id: 'inicio', label: 'Inicio', section: 'Mi espacio' },
   { id: 'venta', label: 'Punto de venta', section: 'Operación' },
@@ -45,8 +46,8 @@ function onConnection() { state.online = navigator.onLine }
 function onUnload(event: BeforeUnloadEvent) {
   if (state.cart.length) { event.preventDefault(); event.returnValue = '' }
 }
-function askLogout() { if (state.cart.length) logoutDialog.value?.showModal(); else void workspace.logout() }
-async function confirmLogout() { await workspace.logout(); logoutDialog.value?.close() }
+function askLogout() { if (state.cart.length) logoutDialog.value = true; else void workspace.logout() }
+async function confirmLogout() { await workspace.logout(); logoutDialog.value = false }
 onMounted(() => {
   void workspace.restore()
   window.addEventListener('hashchange', onHash)
@@ -96,6 +97,6 @@ onBeforeUnmount(() => {
         <footer class="page-footer"><span>Ypy Gestión comercial</span><span>{{ state.mode === 'demo' ? 'Entorno de demostración' : 'Sesión central verificada' }}</span></footer>
       </main>
     </div>
-    <dialog ref="logoutDialog" class="dialog" aria-labelledby="logout-title"><h2 id="logout-title">Hay una venta sin confirmar</h2><p>Si sales ahora, se descartará el carrito actual. Las ventas ya confirmadas se conservan.</p><div class="dialog-actions"><button class="button secondary" :disabled="state.busy" @click="logoutDialog?.close()">Continuar trabajando</button><button class="button primary" :disabled="state.busy" @click="confirmLogout">Salir y descartar carrito</button></div></dialog>
+    <Dialog :visible="logoutDialog" modal :closable="false" :dismissable-mask="false" :show-header="false" :pt="{ root: 'dialog', content: 'logout-dialog-content' }" @update:visible="logoutDialog = $event"><h2 id="logout-title">Hay una venta sin confirmar</h2><p>Si sales ahora, se descartará el carrito actual. Las ventas ya confirmadas se conservan.</p><div class="dialog-actions"><button class="button secondary" :disabled="state.busy" @click="logoutDialog = false">Continuar trabajando</button><button class="button primary" :disabled="state.busy" @click="confirmLogout">Salir y descartar carrito</button></div></Dialog>
   </div>
 </template>

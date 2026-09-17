@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { Workspace } from '../workspace'
+import InputText from 'primevue/inputtext'
+import Password from 'primevue/password'
 const props = defineProps<{ workspace: Workspace }>()
 const user = ref('')
 const password = ref('')
-const visible = ref(false)
 const settings = reactive({ ...props.workspace.state.settings })
 const configError = ref('')
 async function submit() {
@@ -41,10 +42,8 @@ function save() {
         <h2>Iniciar sesión</h2>
         <p class="muted">Ingresa con el usuario asignado a tu terminal.</p>
         <form class="login-form" @submit.prevent="submit">
-          <label>Usuario<input v-model="user" name="username" autocomplete="username" required autofocus placeholder="Tu usuario" :disabled="workspace.state.busy" /></label>
-          <label>Contraseña
-            <span class="password-field"><input v-model="password" name="password" :type="visible ? 'text' : 'password'" autocomplete="current-password" required placeholder="Tu contraseña" :disabled="workspace.state.busy" /><button type="button" class="text-button" :aria-pressed="visible" @click="visible = !visible">{{ visible ? 'Ocultar' : 'Mostrar' }}</button></span>
-          </label>
+          <label>Usuario<InputText v-model="user" name="username" autocomplete="username" required autofocus placeholder="Tu usuario" :disabled="workspace.state.busy" /></label>
+          <label>Contraseña<Password v-model="password" name="password" autocomplete="current-password" required placeholder="Tu contraseña" :disabled="workspace.state.busy" toggle-mask :feedback="false" input-class="password-input" /></label>
           <p v-if="workspace.state.loginError" class="message error" role="alert">{{ workspace.state.loginError }}</p>
           <button class="button primary full" :disabled="workspace.state.busy">{{ workspace.state.busy ? 'Verificando acceso...' : 'Iniciar sesión' }}</button>
         </form>
@@ -56,10 +55,10 @@ function save() {
         <details class="login-settings">
           <summary>Configuración de acceso</summary>
           <form class="form-grid compact" @submit.prevent="save">
-            <label>Empresa<input v-model="settings.empresa" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
-            <label>Sucursal<input v-model="settings.sucursal" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
-            <label>Terminal<input v-model="settings.terminal" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
-            <label>Lista de precios<input v-model="settings.lista" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
+            <label>Empresa<InputText v-model="settings.empresa" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
+            <label>Sucursal<InputText v-model="settings.sucursal" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
+            <label>Terminal<InputText v-model="settings.terminal" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
+            <label>Lista de precios<InputText v-model="settings.lista" inputmode="numeric" pattern="[1-9][0-9]{0,8}" required /></label>
             <p v-if="configError" class="span-all small" role="status">{{ configError }}</p>
             <button class="button secondary span-all">Guardar configuración</button>
           </form>

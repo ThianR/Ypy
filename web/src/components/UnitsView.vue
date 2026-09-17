@@ -6,6 +6,8 @@ import FormLabel from '../ui/FormLabel.vue'
 import FormInfoDialog from '../ui/FormInfoDialog.vue'
 import FormPageHeader from '../ui/FormPageHeader.vue'
 import { usePagination } from '../composables/usePagination'
+import InputText from 'primevue/inputtext'
+import Dialog from 'primevue/dialog'
 
 const props = defineProps<{ workspace: Workspace }>()
 const editing = ref<UnitOfMeasure | null>(null)
@@ -18,8 +20,8 @@ const filters = reactive({ codigo: '', nombre: '', dimension: '', fraction: 'all
 const error = ref('')
 const deleteError = ref('')
 const pendingDelete = ref<UnitOfMeasure | null>(null)
-const deleteDialog = ref<HTMLDialogElement>()
-const discardDialog = ref<HTMLDialogElement>()
+const deleteDialog = ref(false)
+const discardDialog = ref(false)
 const formElement = ref<HTMLFormElement>()
 const saving = ref(false)
 const blank = () => ({ codigo: '', nombre: '', dimension: '', admiteFraccion: true })
@@ -64,10 +66,10 @@ function duplicate(unit: UnitOfMeasure) {
 }
 function requestClose() {
   if (saving.value) return
-  if (dirty.value) discardDialog.value?.showModal()
+  if (dirty.value) discardDialog.value = true
   else editorOpen.value = false
 }
-function discard() { discardDialog.value?.close(); editorOpen.value = false }
+function discard() { discardDialog.value = false; editorOpen.value = false }
 async function save() {
   if (saving.value) return
   saving.value = true
@@ -87,9 +89,9 @@ async function remove(unit: UnitOfMeasure) {
   pendingDelete.value = unit
   deleteError.value = ''
   await nextTick()
-  deleteDialog.value?.showModal()
+  deleteDialog.value = true
 }
-function closeDelete() { deleteDialog.value?.close(); pendingDelete.value = null }
+function closeDelete() { deleteDialog.value = false; pendingDelete.value = null }
 async function confirmRemove() {
   if (!pendingDelete.value) return
   try { await props.workspace.deleteUnit(pendingDelete.value.id); closeDelete() }
@@ -113,7 +115,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <header class="list-heading"><h2 id="units-list-title">Unidades registradas</h2><span class="muted">{{ workspace.state.unitsOfMeasure.length }} registros</span></header>
       <div class="list-tools">
         <div class="search-row">
-          <label class="unit-search">Buscar<input v-model="query" type="search" placeholder="Código o nombre" /></label>
+          <label class="unit-search">Buscar<InputText v-model="query" type="search" placeholder="Código o nombre" /></label>
           <button class="button secondary" :aria-expanded="showFilters" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar filtros' : 'Filtros específicos' }}</button>
           <button v-if="activeFilters" class="text-button" @click="clearFilters">Limpiar filtros ({{ activeFilters }})</button>
         </div>
@@ -121,7 +123,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <div class="unit-table-scroll" tabindex="0" role="region" aria-label="Listado de unidades">
         <table class="unit-table">
           <caption class="sr-only">Unidades de medida, página {{ page }} de {{ pageCount }}</caption>
-          <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Dimensión</th><th scope="col">Fracciones</th><th scope="col" class="row-actions">Acciones</th></tr><tr v-if="showFilters" class="column-filters-row"><th><label class="sr-only" for="unit-code-filter">Código contiene</label><input id="unit-code-filter" v-model="filters.codigo" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-name-filter">Nombre contiene</label><input id="unit-name-filter" v-model="filters.nombre" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-dimension-filter">Dimensión contiene</label><input id="unit-dimension-filter" v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></th><th><label class="sr-only" for="unit-fraction-filter">Fracciones</label><select id="unit-fraction-filter" v-model="filters.fraction"><option value="all">Todas</option><option value="true">Admite fracciones</option><option value="false">Solo enteros</option></select></th><th class="row-actions"><span class="sr-only">Sin filtro</span></th></tr></thead>
+          <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Dimensión</th><th scope="col">Fracciones</th><th scope="col" class="row-actions">Acciones</th></tr><tr v-if="showFilters" class="column-filters-row"><th><label class="sr-only" for="unit-code-filter">Código contiene</label><InputText id="unit-code-filter" v-model="filters.codigo" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-name-filter">Nombre contiene</label><InputText id="unit-name-filter" v-model="filters.nombre" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-dimension-filter">Dimensión contiene</label><InputText id="unit-dimension-filter" v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></th><th><label class="sr-only" for="unit-fraction-filter">Fracciones</label><select id="unit-fraction-filter" v-model="filters.fraction"><option value="all">Todas</option><option value="true">Admite fracciones</option><option value="false">Solo enteros</option></select></th><th class="row-actions"><span class="sr-only">Sin filtro</span></th></tr></thead>
           <tbody><tr v-if="!filtered.length"><td colspan="5" class="table-empty"><strong>{{ activeFilters ? 'No hay coincidencias' : 'Todavía no hay unidades' }}</strong><span>{{ activeFilters ? 'Cambia o limpia los filtros para ver otros registros.' : 'Selecciona Nuevo para registrar la primera unidad.' }}</span><button v-if="activeFilters" class="button secondary" @click="clearFilters">Limpiar filtros</button></td></tr><tr v-for="unit in rows" :key="unit.id">
             <td><strong>{{ unit.codigo }}</strong></td><td>{{ unit.nombre }}</td><td>{{ unit.dimension }}</td><td>{{ unit.admiteFraccion ? 'Sí' : 'No' }}</td>
             <td class="row-actions"><div class="row-buttons">
@@ -145,13 +147,13 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <form id="unit-editor-form" ref="formElement" @submit.prevent="save">
         <fieldset :disabled="saving" class="unit-fields">
           <FormLabel for="unit-code" required>Código</FormLabel>
-          <input id="unit-code" v-model="form.codigo" data-initial-focus maxlength="12" required :aria-describedby="showHelp ? 'unit-code-help' : undefined" placeholder="Ej. KG" />
+          <InputText id="unit-code" v-model="form.codigo" data-initial-focus maxlength="12" required :aria-describedby="showHelp ? 'unit-code-help' : undefined" placeholder="Ej. KG" />
           <p v-if="showHelp" id="unit-code-help" class="field-help">Identificador corto y único para buscar la unidad. Por ejemplo: UN, KG o L.</p>
           <FormLabel for="unit-name" required>Nombre</FormLabel>
-          <input id="unit-name" v-model="form.nombre" maxlength="80" required :aria-describedby="showHelp ? 'unit-name-help' : undefined" placeholder="Ej. Kilogramo" />
+          <InputText id="unit-name" v-model="form.nombre" maxlength="80" required :aria-describedby="showHelp ? 'unit-name-help' : undefined" placeholder="Ej. Kilogramo" />
           <p v-if="showHelp" id="unit-name-help" class="field-help">Nombre que verá tu equipo al seleccionar una unidad.</p>
           <FormLabel for="unit-dimension" required>Dimensión</FormLabel>
-          <input id="unit-dimension" v-model="form.dimension" maxlength="30" required :aria-describedby="showHelp ? 'unit-dimension-help' : undefined" placeholder="Ej. PESO" />
+          <InputText id="unit-dimension" v-model="form.dimension" maxlength="30" required :aria-describedby="showHelp ? 'unit-dimension-help' : undefined" placeholder="Ej. PESO" />
           <p v-if="showHelp" id="unit-dimension-help" class="field-help">Qué se mide: PESO para kilogramos y gramos, VOLUMEN para litros y mililitros, UNIDAD para contar piezas. Agruparlas no realiza conversiones automáticamente.</p>
           <label class="fraction-field"><input v-model="form.admiteFraccion" type="checkbox" :aria-describedby="showHelp ? 'unit-fraction-help' : undefined" /><span>Permitir cantidades fraccionarias</span></label>
           <p v-if="showHelp" id="unit-fraction-help" class="field-help">Permite cantidades como 0,5 kg o 1,25 L. Desactívalo si solo se admiten cantidades enteras.</p>
@@ -166,15 +168,15 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <template #actions><button type="button" class="button secondary" :disabled="saving" @click="requestClose">Cancelar</button><button type="submit" form="unit-editor-form" class="button primary" :disabled="saving">{{ saving ? 'Guardando…' : 'Guardar' }}</button></template>
     </SmallFormDialog>
 
-    <dialog ref="deleteDialog" class="dialog unit-confirm" aria-labelledby="unit-delete-title" @cancel.prevent="closeDelete">
+    <Dialog :visible="deleteDialog" modal :show-header="false" :pt="{ root: 'dialog unit-confirm', content: 'confirm-dialog-content' }" @update:visible="deleteDialog = $event">
       <h2 id="unit-delete-title">¿Eliminar este registro?</h2><p><strong>{{ pendingDelete?.codigo }} · {{ pendingDelete?.nombre }}</strong></p><p>Se eliminará del catálogo local. Esta acción no se puede deshacer.</p>
       <p v-if="deleteError" class="message error" role="alert">{{ deleteError }}</p>
       <div class="dialog-actions"><button class="button secondary" autofocus @click="closeDelete">Cancelar</button><button class="button danger" @click="confirmRemove">Eliminar</button></div>
-    </dialog>
-    <dialog ref="discardDialog" class="dialog unit-confirm" aria-labelledby="unit-discard-title" @cancel.prevent="discardDialog?.close()">
+    </Dialog>
+    <Dialog :visible="discardDialog" modal :show-header="false" :pt="{ root: 'dialog unit-confirm', content: 'confirm-dialog-content' }" @update:visible="discardDialog = $event">
       <h2 id="unit-discard-title">Hay cambios sin guardar</h2><p>Puedes continuar editando o cerrar y descartar los cambios.</p>
-      <div class="dialog-actions"><button class="button secondary" autofocus @click="discardDialog?.close()">Continuar editando</button><button class="button danger" @click="discard">Descartar cambios</button></div>
-    </dialog>
+      <div class="dialog-actions"><button class="button secondary" autofocus @click="discardDialog = false">Continuar editando</button><button class="button danger" @click="discard">Descartar cambios</button></div>
+    </Dialog>
   </div>
 </template>
 

@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import Dialog from 'primevue/dialog'
 
 const props = defineProps<{ open: boolean; title: string; titleId: string }>()
 const emit = defineEmits<{ close: [] }>()
-const dialog = ref<HTMLDialogElement>()
 let opener: HTMLElement | null = null
 
 watch(() => props.open, async open => {
   await nextTick()
-  if (open && !dialog.value?.open) {
+  if (open) {
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    dialog.value?.showModal()
-    dialog.value?.querySelector<HTMLElement>('[data-initial-focus]')?.focus()
-  } else if (!open && dialog.value?.open) {
-    dialog.value.close()
-    if (opener?.isConnected) opener.focus()
+    await nextTick()
+    document.querySelector<HTMLElement>('[data-initial-focus]')?.focus()
+  } else if (opener?.isConnected) {
+    opener.focus()
   }
 }, { immediate: true })
-onBeforeUnmount(() => dialog.value?.close())
+onBeforeUnmount(() => { opener = null })
 </script>
 
 <template>
-  <dialog ref="dialog" class="small-form-dialog" :aria-labelledby="titleId" @cancel.prevent="emit('close')">
+  <Dialog :visible="open" modal :closable="false" :dismissable-mask="false" :show-header="false" :pt="{ root: 'small-form-dialog', content: 'small-form-dialog-content' }" :aria-labelledby="titleId" @hide="emit('close')">
     <div class="small-form-shell">
       <header class="small-form-header">
         <h2 :id="titleId">{{ title }}</h2>
@@ -30,12 +29,12 @@ onBeforeUnmount(() => dialog.value?.close())
       <div class="small-form-body"><slot /></div>
       <footer class="small-form-footer"><slot name="actions" /></footer>
     </div>
-  </dialog>
+  </Dialog>
 </template>
 
-<style scoped>
-.small-form-dialog { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(540px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; padding: 0; border: 0; border-left: 1px solid var(--line); background: var(--paper); color: var(--ink); box-shadow: -12px 0 48px #10282426; }
-.small-form-dialog::backdrop { background: #10282466; }
+<style>
+.small-form-dialog { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(540px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; padding: 0; border: 0; border-left: 1px solid var(--line); border-radius: 0; background: var(--paper); color: var(--ink); box-shadow: -12px 0 48px #10282426; }
+.small-form-dialog-content { height: 100%; padding: 0; }
 .small-form-shell { display: flex; flex-direction: column; height: 100%; }
 .small-form-header, .small-form-footer { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: var(--paper); }
 .small-form-header { justify-content: space-between; border-bottom: 1px solid var(--line); }

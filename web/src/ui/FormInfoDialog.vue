@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Dialog from 'primevue/dialog'
 defineProps<{
   open: boolean
   title: string
@@ -15,7 +16,7 @@ const tab = ref<'access' | 'special'>('access')
 </script>
 
 <template>
-  <dialog v-if="open" class="form-info-dialog" open aria-labelledby="form-info-title" @click.self="emit('close')">
+  <Dialog :visible="open" modal :closable="false" :dismissable-mask="true" :show-header="false" :pt="{ mask: 'form-info-dialog-mask', root: 'form-info-dialog', content: 'form-info-dialog-content' }" aria-labelledby="form-info-title" @hide="emit('close')">
     <div class="form-info-card">
       <header><div><p class="eyebrow">Información del formulario</p><h2 id="form-info-title">{{ title }}</h2></div><button class="icon-close" aria-label="Cerrar información" title="Cerrar" @click="emit('close')">×</button></header>
       <div class="form-info-content">
@@ -27,12 +28,13 @@ const tab = ref<'access' | 'special'>('access')
       </div>
       <footer><button class="button primary" @click="emit('close')">Cerrar</button></footer>
     </div>
-  </dialog>
+  </Dialog>
 </template>
 
-<style scoped>
-.form-info-dialog { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; width: 100vw; max-width: none; height: 100vh; max-height: none; margin: 0; padding: 16px; border: 0; background: #10282466; color: var(--ink); }
-.form-info-dialog::backdrop { background: #10282488; backdrop-filter: blur(3px); }
+<style>
+.form-info-dialog-mask { background: #10282488; backdrop-filter: blur(3px); }
+.form-info-dialog { width: min(640px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 32px)); overflow: auto; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 70px #10282433; animation: dialog-in .18s ease-out; }
+.form-info-dialog-content { padding: 0; }
 .form-info-card { width: min(640px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 32px)); overflow: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: 0 24px 70px #10282433; animation: dialog-in .18s ease-out; }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .form-info-card header, .form-info-card footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; }
