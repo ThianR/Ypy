@@ -10,6 +10,8 @@ import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
 import Checkbox from 'primevue/checkbox'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
 
 const props = defineProps<{ workspace: Workspace }>()
 const editing = ref<UnitOfMeasure | null>(null)
@@ -122,21 +124,9 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
           <button class="button secondary" :aria-expanded="showFilters" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar filtros' : 'Filtros específicos' }}</button>
           <button v-if="activeFilters" class="text-button" @click="clearFilters">Limpiar filtros ({{ activeFilters }})</button>
         </div>
+        <div v-if="showFilters" class="unit-filters"><label>Código<InputText v-model="filters.codigo" placeholder="Contiene…" /></label><label>Nombre<InputText v-model="filters.nombre" placeholder="Contiene…" /></label><label>Dimensión<InputText v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></label><label>Fracciones<Select v-model="filters.fraction" :options="fractionOptions" option-label="label" option-value="value" /></label></div>
       </div>
-      <div class="unit-table-scroll" tabindex="0" role="region" aria-label="Listado de unidades">
-        <table class="unit-table">
-          <caption class="sr-only">Unidades de medida, página {{ page }} de {{ pageCount }}</caption>
-          <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Dimensión</th><th scope="col">Fracciones</th><th scope="col" class="row-actions">Acciones</th></tr><tr v-if="showFilters" class="column-filters-row"><th><label class="sr-only" for="unit-code-filter">Código contiene</label><InputText id="unit-code-filter" v-model="filters.codigo" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-name-filter">Nombre contiene</label><InputText id="unit-name-filter" v-model="filters.nombre" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-dimension-filter">Dimensión contiene</label><InputText id="unit-dimension-filter" v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></th><th><label class="sr-only" for="unit-fraction-filter">Fracciones</label><Select input-id="unit-fraction-filter" v-model="filters.fraction" :options="fractionOptions" option-label="label" option-value="value" /></th><th class="row-actions"><span class="sr-only">Sin filtro</span></th></tr></thead>
-          <tbody><tr v-if="!filtered.length"><td colspan="5" class="table-empty"><strong>{{ activeFilters ? 'No hay coincidencias' : 'Todavía no hay unidades' }}</strong><span>{{ activeFilters ? 'Cambia o limpia los filtros para ver otros registros.' : 'Selecciona Nuevo para registrar la primera unidad.' }}</span><button v-if="activeFilters" class="button secondary" @click="clearFilters">Limpiar filtros</button></td></tr><tr v-for="unit in rows" :key="unit.id">
-            <td><strong>{{ unit.codigo }}</strong></td><td>{{ unit.nombre }}</td><td>{{ unit.dimension }}</td><td>{{ unit.admiteFraccion ? 'Sí' : 'No' }}</td>
-            <td class="row-actions"><div class="row-buttons">
-              <button class="row-button" :aria-label="'Editar ' + unit.codigo" :title="'Editar ' + unit.codigo" @click="openEditor(unit)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z" /></svg></button>
-              <button class="row-button" :aria-label="'Duplicar ' + unit.codigo" :title="'Duplicar ' + unit.codigo" @click="duplicate(unit)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg></button>
-              <button class="row-button delete-button" :aria-label="'Eliminar ' + unit.codigo" :title="'Eliminar ' + unit.codigo" @click="remove(unit)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" /></svg></button>
-            </div></td>
-          </tr></tbody>
-        </table>
-      </div>
+      <DataTable :value="rows" data-key="id" class="ypy-data-table" scrollable scroll-height="52vh"><Column field="codigo" header="Código"><template #body="slotProps"><strong>{{ slotProps.data.codigo }}</strong></template></Column><Column field="nombre" header="Nombre" /><Column field="dimension" header="Dimensión" /><Column header="Fracciones"><template #body="slotProps">{{ slotProps.data.admiteFraccion ? 'Sí' : 'No' }}</template></Column><Column header="Acciones"><template #body="slotProps"><div class="row-buttons"><button class="row-button" :aria-label="'Editar ' + slotProps.data.codigo" @click="openEditor(slotProps.data)">Editar</button><button class="row-button" :aria-label="'Duplicar ' + slotProps.data.codigo" @click="duplicate(slotProps.data)">Duplicar</button><button class="row-button delete-button" :aria-label="'Eliminar ' + slotProps.data.codigo" @click="remove(slotProps.data)">Eliminar</button></div></template></Column><template #empty><div class="table-empty"><strong>{{ activeFilters ? 'No hay coincidencias' : 'Todavía no hay unidades' }}</strong><span>{{ activeFilters ? 'Cambia o limpia los filtros para ver otros registros.' : 'Selecciona Nuevo para registrar la primera unidad.' }}</span><button v-if="activeFilters" class="button secondary" @click="clearFilters">Limpiar filtros</button></div></template></DataTable>
       <footer class="unit-pagination">
         <label>Filas por página<Select v-model="pageSize" :options="[10, 25, 50]" /></label>
         <span role="status">{{ start }}–{{ end }} de {{ filtered.length }}</span>
