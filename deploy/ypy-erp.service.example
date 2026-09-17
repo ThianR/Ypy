@@ -1,0 +1,17 @@
+[Unit]
+Description=Ypy ERP
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ypy
+ExecStart=/opt/ypy/erp
+Restart=on-failure
+EnvironmentFile=/etc/ypy/ypy.env
+User=ypy
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ypy.local/contracts/events/envelope.schema.json",
+  "title": "Ypy event envelope",
+  "type": "object",
+  "required": ["event_id", "event_type", "empresa_id", "version", "origin", "correlation_id", "occurred_at", "payload"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"type": "string"},
+    "empresa_id": {"type": "string", "pattern": "^[0-9]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "origin": {"type": "string"},
+    "correlation_id": {"type": "string", "format": "uuid"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,402 @@
+openapi: 3.0.3
+info:
+  title: Ypy API
+  version: 0.1.0
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: createScopedSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '200':
+          description: Active scoped session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LoginResponse'}
+        '400': {description: Invalid login request}
+        '401': {description: Invalid credentials or scope}
+        '503': {description: PostgreSQL is required}
+  /api/v1/pos/operations:
+    post:
+      operationId: integratePosOperation
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PosOperation'}
+      responses:
+        '200': {description: Applied or previously applied operation}
+        '400': {description: Invalid operation}
+        '409': {description: Same UUID with different content}
+        '500': {description: Retryable server failure}
+  /api/v1/pos/sales:
+    post:
+      operationId: integratePosSale
+      parameters:
+        - in: header
+          name: X-Request-ID
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PosOperation'}
+      responses:
+        '200': {description: Sale applied by the V4 transaction}
+        '400': {description: Invalid operation}
+        '409': {description: Sale integration rejected by V4 rules}
+        '503': {description: PostgreSQL is required}
+  /api/v1/pos/sync/cursor:
+    get:
+      operationId: getPosSyncCursor
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: terminal_id, required: true, schema: {type: integer, minimum: 1}}
+      responses:
+        '200': {description: Current monotonic synchronization cursor}
+        '400': {description: Invalid scope}
+        '503': {description: PostgreSQL is required}
+  /api/v1/sales/returns:
+    post:
+      operationId: createSalesReturn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SalesReturnRequest'}
+      responses:
+        '200': {description: Return registered}
+        '400': {description: Invalid return}
+        '403': {description: Return scope forbidden}
+        '409': {description: Return rejected by V4}
+        '503': {description: PostgreSQL is required}
+  /api/v1/sales/credit-notes:
+    post:
+      operationId: createSalesCreditNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SalesCreditNoteRequest'}
+      responses:
+        '200': {description: Confirmed credit note}
+        '400': {description: Invalid credit note}
+        '403': {description: Credit note scope forbidden}
+        '409': {description: Credit note rejected by V4}
+        '503': {description: PostgreSQL is required}
+  /api/v1/sales/credits/apply:
+    post:
+      operationId: applySalesCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SalesCreditApplicationRequest'}
+      responses:
+        '200': {description: Credit applied}
+        '400': {description: Invalid credit application}
+        '403': {description: Credit scope forbidden}
+        '409': {description: Credit application rejected by V4}
+        '503': {description: PostgreSQL is required}
+  /api/v1/catalog/scale-rules:
+    get:
+      operationId: getScaleRules
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+      responses:
+        '200':
+          description: Versioned scale and price-label rules for the company
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [empresa_id, rules]
+                properties:
+                  empresa_id: {type: integer, minimum: 1}
+                  rules: {type: array, items: {$ref: '#/components/schemas/ScaleRule'}}
+        '400': {description: Invalid company scope}
+        '500': {description: Failed to read rules}
+        '503': {description: PostgreSQL is required}
+  /api/v1/catalog/barcodes:
+    get:
+      operationId: resolveBarcode
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: codigo, required: true, schema: {type: string, minLength: 1}}
+      responses:
+        '200': {description: Active sellable article presentation}
+        '400': {description: Invalid barcode query}
+        '403': {description: Company scope forbidden}
+        '404': {description: Barcode not found}
+        '503': {description: PostgreSQL is required}
+  /api/v1/catalog/items:
+    get:
+      operationId: searchCatalogItems
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: lista_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: as_of, required: true, schema: {type: string, format: date-time}}
+        - {in: query, name: q, required: true, schema: {type: string, minLength: 1}}
+        - {in: query, name: limite, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses:
+        '200': {description: Active sellable catalog items with effective price}
+        '400': {description: Invalid catalog query}
+        '403': {description: Company scope forbidden}
+        '500': {description: Catalog search failed}
+        '503': {description: PostgreSQL is required}
+  /api/v1/catalog/prices:
+    get:
+      operationId: getEffectivePrice
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: lista_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: presentacion_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: cantidad, required: true, schema: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}}
+        - {in: query, name: as_of, required: true, schema: {type: string, format: date-time}}
+      responses:
+        '200': {description: Effective price snapshot}
+        '400': {description: Invalid price query}
+        '403': {description: Company scope forbidden}
+        '404': {description: No effective price found}
+        '503': {description: PostgreSQL is required}
+  /api/v1/maestros/quotes:
+    get:
+      operationId: getEffectiveQuote
+      parameters:
+        - {in: query, name: empresa_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: moneda_origen_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: moneda_destino_id, required: true, schema: {type: integer, minimum: 1}}
+        - {in: query, name: tipo, required: true, schema: {type: string, enum: [COMPRA, VENTA, CONTABLE]}}
+        - {in: query, name: as_of, required: true, schema: {type: string, format: date-time}}
+      responses:
+        '200':
+          description: Effective quote snapshot
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuoteSnapshot'}
+        '400': {description: Invalid quote query}
+        '403': {description: Company scope forbidden}
+        '404': {description: No effective quote found}
+        '503': {description: PostgreSQL is required}
+  /api/v1/cash/open:
+    post:
+      operationId: openCash
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CashOpenRequest'}}}}
+      responses:
+        '200': {description: Cash opening created}
+        '400': {description: Invalid cash opening}
+        '403': {description: Company scope forbidden}
+        '409': {description: Opening rejected by V4}
+        '503': {description: PostgreSQL is required}
+  /api/v1/cash/close:
+    post:
+      operationId: closeCash
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CashCloseRequest'}}}}
+      responses:
+        '200': {description: Cash closed}
+        '400': {description: Invalid cash closing}
+        '403': {description: Company scope forbidden}
+        '409': {description: Closing rejected by V4}
+        '503': {description: PostgreSQL is required}
+  /api/v1/cash/receipts:
+    post:
+      operationId: createCashReceipt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CashReceiptRequest'}
+      responses:
+        '200': {description: Confirmed receipt}
+        '400': {description: Invalid receipt}
+        '403': {description: Receipt scope forbidden}
+        '409': {description: Receipt could not be created or confirmed}
+        '503': {description: PostgreSQL is required}
+  /api/v1/cash/movements:
+    post:
+      operationId: createCashMovement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CashMovementRequest'}
+      responses:
+        '200': {description: Cash movement recorded}
+        '400': {description: Invalid cash movement}
+        '403': {description: Movement scope forbidden}
+        '409': {description: Cash movement rejected or conflicting}
+        '503': {description: PostgreSQL is required}
+  /api/v1/cash/payments:
+    post:
+      operationId: createSupplierPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SupplierPaymentRequest'}
+      responses:
+        '200': {description: Confirmed supplier payment}
+        '400': {description: Invalid payment}
+        '403': {description: Payment scope forbidden}
+        '409': {description: Payment rejected by V4}
+        '503': {description: PostgreSQL is required}
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required: [login, password, empresa_id, sucursal_id, terminal_id]
+      properties:
+        login: {type: string, minLength: 1}
+        password: {type: string, minLength: 1, writeOnly: true}
+        empresa_id: {type: integer, minimum: 1}
+        sucursal_id: {type: integer, minimum: 1}
+        terminal_id: {type: integer, minimum: 1}
+    LoginResponse:
+      type: object
+      required: [session_id, status]
+      properties:
+        session_id: {type: string, format: uuid}
+        status: {type: string, enum: [ACTIVE]}
+    PosOperation:
+      type: object
+      required: [id, empresa_id, terminal_id, payload]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: string, pattern: '^[0-9]+$'}
+        terminal_id: {type: string, pattern: '^[0-9]+$'}
+        payload: {type: string}
+    ScaleRule:
+      type: object
+      required: [prefix, length, product_start, product_length, value_start, value_length, decimals, content]
+      properties:
+        prefix: {type: string, minLength: 1}
+        length: {type: integer, minimum: 1}
+        product_start: {type: integer, minimum: 1}
+        product_length: {type: integer, minimum: 1}
+        value_start: {type: integer, minimum: 1}
+        value_length: {type: integer, minimum: 1}
+        decimals: {type: integer, minimum: 0, maximum: 6}
+        content: {type: string, enum: [PESO, PRECIO]}
+    QuoteSnapshot:
+      type: object
+      required: [from, to, rate, asOf]
+      properties:
+        from: {type: string, minLength: 1}
+        to: {type: string, minLength: 1}
+        rate: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+        asOf: {type: string, format: date-time}
+    CashOpenRequest:
+      type: object
+      required: [empresa_id, caja_id, usuario_id, terminal_id, fondo]
+      properties:
+        empresa_id: {type: integer, minimum: 1}
+        caja_id: {type: integer, minimum: 1}
+        usuario_id: {type: integer, minimum: 1}
+        terminal_id: {type: integer, minimum: 1}
+        fondo: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+    CashCloseRequest:
+      type: object
+      required: [empresa_id, apertura_id, conteos]
+      properties:
+        empresa_id: {type: integer, minimum: 1}
+        apertura_id: {type: integer, minimum: 1}
+        conteos: {type: object}
+    CashReceiptRequest:
+      type: object
+      required: [id, empresa_id, cliente_id, apertura_id, moneda_id, importe, fecha, formas]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: integer, minimum: 1}
+        cliente_id: {type: integer, minimum: 1}
+        apertura_id: {type: integer, minimum: 1}
+        moneda_id: {type: integer, minimum: 1}
+        importe: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+        fecha: {type: string, format: date-time}
+        formas:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [medio_id, importe]
+            properties:
+              medio_id: {type: integer, minimum: 1}
+              importe: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+              referencia: {type: string}
+    CashMovementRequest:
+      type: object
+      required: [id, empresa_id, apertura_id, medio_id, tipo, importe, motivo, fecha]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: integer, minimum: 1}
+        apertura_id: {type: integer, minimum: 1}
+        medio_id: {type: integer, minimum: 1}
+        tipo: {type: string, enum: [INGRESO, RETIRO]}
+        importe: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+        motivo: {type: string, minLength: 1}
+        fecha: {type: string, format: date-time}
+    SalesReturnRequest:
+      type: object
+      required: [id, empresa_id, linea_id, cantidad, motivo]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: integer, minimum: 1}
+        linea_id: {type: integer, minimum: 1}
+        cantidad: {type: string, pattern: '^[0-9]+(\.[0-9]+)?$'}
+        motivo: {type: string, minLength: 1}
+    SalesCreditNoteRequest:
+      type: object
+      required: [id, empresa_id, sucursal_id, usuario_id, tipo_id, cliente_id, moneda_id, comprobante_origen_id, total, fecha, motivo_excepcion]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: integer, minimum: 1}
+        sucursal_id: {type: integer, minimum: 1}
+        usuario_id: {type: integer, minimum: 1}
+        tipo_id: {type: integer, minimum: 1}
+        cliente_id: {type: integer, minimum: 1}
+        moneda_id: {type: integer, minimum: 1}
+        comprobante_origen_id: {type: integer, minimum: 1}
+        total: {type: string, pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'}
+        fecha: {type: string, format: date-time}
+        motivo_excepcion: {type: string, minLength: 1}
+    SalesCreditApplicationRequest:
+      type: object
+      required: [id, empresa_id, credito_id, cuota_id, importe]
+      properties:
+        id: {type: string, format: uuid}
+        empresa_id: {type: integer, minimum: 1}
+        credito_id: {type: integer, minimum: 1}
+        cuota_id: {type: integer, minimum: 1}
+        importe: {type: string, pattern: '^[1-9][0-9]*(\.[0-9]+)?$'}
+    SupplierPaymentRequest:
+      type: object
+      required: [pago, formas]
+      properties:
+        pago:
+          type: object
+          required: [id, empresa_id, proveedor_id, apertura_id, moneda_id, importe, fecha]
+          properties:
+            id: {type: string, format: uuid}
+            empresa_id: {type: integer, minimum: 1}
+            proveedor_id: {type: integer, minimum: 1}
+            apertura_id: {type: integer, minimum: 1}
+            moneda_id: {type: integer, minimum: 1}
+            importe: {type: string, pattern: '^[1-9][0-9]*(\.[0-9]+)?$'}
+            fecha: {type: string, format: date-time}
+        formas:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [medio_id, importe]
+            properties:
+              medio_id: {type: integer, minimum: 1}
+              importe: {type: string, pattern: '^[1-9][0-9]*(\.[0-9]+)?$'}
+              referencia: {type: string}

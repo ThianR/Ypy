@@ -1,0 +1,69 @@
+# Dependencias y artefactos de JavaScript
+**/node_modules/
+**/.pnpm-store/
+**/.npm/
+**/dist/
+**/build/
+**/coverage/
+**/.vite/
+
+# Artefactos de Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Entornos locales y secretos
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# IDEs y sistema operativo
+.idea/
+**/.idea/
+.vscode/*
+**/.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+!**/.vscode/extensions.json
+!**/.vscode/settings.example.json
+.agent/
+**/.agent/
+*.code-workspace
+.project
+.classpath
+.settings/
+.factorypath
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs, temporales y archivos generados localmente
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.pid
+**/temp/
+**/tmp/
+
+# Datos locales de herramientas y servidores
+.lab-pgdata*/
+.tools/
+**/.cache/
+**/.local/
+**/pgdata/
+
+# Binarios y exportaciones locales
+*.exe
+*.zip
+*.7z
+*.rar
+
+# Archivos de configuración local de pruebas
+*.local
+*.local.*
+

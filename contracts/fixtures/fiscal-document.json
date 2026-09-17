@@ -1,0 +1,7 @@
+{
+  "document_id": "00000000-0000-0000-0000-000000000301",
+  "empresa_id": "4",
+  "version": 1,
+  "status": "PENDING",
+  "payload": {"document_type": "INVOICE", "total": "100.000000"}
+}

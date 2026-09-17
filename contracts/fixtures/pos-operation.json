@@ -1,0 +1,15 @@
+{
+  "operation_id": "00000000-0000-0000-0000-000000000001",
+  "empresa_id": "1",
+  "sucursal_id": "1",
+  "terminal_id": "1",
+  "cash_session_id": "1",
+  "sequence": "1",
+  "contract_version": 1,
+  "commercial_date": "2026-09-15",
+  "currency": "PYG",
+  "total": "150000",
+  "payments": [{"method": "CASH", "currency": "PYG", "amount": "150000"}],
+  "queue_state": "PENDING"
+}
+
