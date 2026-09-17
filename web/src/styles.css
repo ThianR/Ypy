@@ -57,6 +57,42 @@ h1, h2, h3, p { overflow-wrap: break-word; }
 label { display: grid; gap: 7px; color: #485957; font-size: .82rem; font-weight: 700; }
 input, select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #c9d4ce; border-radius: 7px; outline: none; background: var(--paper); color: var(--ink); }
 input:focus, select:focus { border-color: #3c877a; box-shadow: 0 0 0 3px rgba(60, 135, 122, .17); }
+.p-select { display: inline-flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; border: 1px solid #c9d4ce; border-radius: 7px; outline: none; background: var(--paper); color: var(--ink); }
+.p-select:focus, .p-select.p-focus { border-color: #3c877a; box-shadow: 0 0 0 3px rgba(60, 135, 122, .17); }
+.p-select-label { flex: 1; overflow: hidden; padding: 10px 12px; text-overflow: ellipsis; white-space: nowrap; }
+.p-select-label.p-placeholder { color: var(--muted); }
+.p-select-dropdown { display: grid; place-items: center; width: 38px; align-self: stretch; border-left: 1px solid var(--line); color: var(--muted); }
+.p-select-overlay { z-index: 1200; min-width: 12rem; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 28px rgba(16, 40, 36, .16); }
+.p-select-list { margin: 0; padding: 5px; list-style: none; }
+.p-select-option { padding: 9px 10px; border-radius: 5px; color: var(--ink); font-size: .84rem; cursor: pointer; }
+.p-select-option:hover, .p-select-option.p-focus { background: #e7f0eb; color: var(--green); }
+.p-select-option.p-selected { background: #dcece4; color: var(--green); font-weight: 700; }
+.p-checkbox { position: relative; display: inline-flex; flex: 0 0 auto; width: 19px; height: 19px; }
+.p-checkbox-input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.p-checkbox-box { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid #b9c9c2; border-radius: 5px; background: var(--paper); color: #fff; }
+.p-checkbox.p-highlight .p-checkbox-box { border-color: var(--green); background: var(--green); }
+.p-checkbox-icon { width: 12px; height: 12px; }
+.p-colorpicker { position: relative; display: inline-flex; }
+.p-colorpicker-preview { width: 42px; height: 42px; border: 1px solid #b9c9c2; border-radius: 7px; cursor: pointer; }
+.p-colorpicker-panel { z-index: 1200; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 28px rgba(16, 40, 36, .16); }
+.p-datepicker { display: inline-flex; align-items: center; width: 100%; min-height: 44px; border: 1px solid #c9d4ce; border-radius: 7px; background: var(--paper); }
+.p-datepicker:focus-within { border-color: #3c877a; box-shadow: 0 0 0 3px rgba(60, 135, 122, .17); }
+.p-datepicker-input { min-width: 0; flex: 1; border: 0; box-shadow: none; }
+.p-datepicker-input:focus { border: 0; box-shadow: none; }
+.p-datepicker-dropdown { display: grid; place-items: center; width: 38px; height: 42px; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--muted); }
+.p-datepicker-panel { z-index: 1200; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 28px rgba(16, 40, 36, .16); }
+.ypy-data-table { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.ypy-data-table .p-datatable-table-container { overflow-x: auto; }
+.ypy-data-table table { width: 100%; border-collapse: collapse; }
+.ypy-data-table th, .ypy-data-table td { padding: 13px 16px; border-bottom: 1px solid #edf0ed; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.ypy-data-table th { color: var(--muted); font-size: .7rem; font-weight: 800; }
+.ypy-data-table tbody tr:hover { background: var(--page-bg); }
+.ypy-data-table .p-paginator { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
+.ypy-data-table .p-paginator button { min-width: 32px; min-height: 32px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--green); }
+.ypy-data-table .p-paginator button:hover:not(:disabled), .ypy-data-table .p-paginator button.p-highlight { border-color: var(--green); background: #e7f0eb; }
+.ypy-data-table .p-paginator button:disabled { opacity: .45; }
+.ypy-data-table .p-paginator .p-select { width: auto; min-height: 32px; }
+.ypy-data-table .p-paginator .p-select-label { padding-top: 6px; padding-bottom: 6px; }
 .password-field { position: relative; }
 .password-field input { padding-right: 78px; }
 .text-button { padding: 3px 0; border: 0; background: none; color: var(--green); font-size: .82rem; font-weight: 700; }

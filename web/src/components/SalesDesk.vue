@@ -3,11 +3,13 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { cashChange, categories, lineTotal, money, type Workspace } from '../workspace'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
+import Select from 'primevue/select'
 const props = defineProps<{ workspace: Workspace }>()
 const query = ref('')
 const category = ref('Todos')
 const payment = ref('CASH')
 const received = ref('')
+const paymentOptions = [{ label: 'Efectivo', value: 'CASH' }, { label: 'Tarjeta', value: 'CARD' }]
 const checkoutOpen = ref(false)
 const checkoutButton = ref<HTMLButtonElement>()
 const localError = ref('')
@@ -65,7 +67,7 @@ async function confirm() {
       <div class="dialog-heading"><div><p class="muted small">Último paso</p><h2 id="checkout-title">Confirmar cobro</h2></div><button type="button" class="text-button" :disabled="workspace.state.saving" @click="checkoutOpen = false">Volver</button></div>
       <p class="message info">Venta de práctica. No emite un comprobante fiscal ni se envía al servidor.</p>
       <div class="checkout-amount"><span>Total a cobrar</span><strong>{{ money(workspace.total.value) }}</strong></div>
-      <label>Medio de pago<select v-model="payment" :disabled="workspace.state.saving"><option value="CASH">Efectivo</option><option value="CARD">Tarjeta</option></select></label>
+      <label>Medio de pago<Select v-model="payment" :options="paymentOptions" option-label="label" option-value="value" :disabled="workspace.state.saving" /></label>
       <template v-if="payment === 'CASH'"><label class="field-space">Importe recibido (Gs.)<InputText v-model="received" inputmode="numeric" pattern="[0-9]{1,15}" required :disabled="workspace.state.saving" /></label><p class="change-line"><span>Vuelto</span><strong>{{ change === null ? 'Importe insuficiente' : money(change) }}</strong></p></template>
       <p v-else class="muted small field-space">Confirma el pago en el dispositivo de tarjetas antes de registrar la venta.</p>
       <p v-if="localError" role="alert" class="message error">{{ localError }}</p>

@@ -8,6 +8,8 @@ import FormPageHeader from '../ui/FormPageHeader.vue'
 import { usePagination } from '../composables/usePagination'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
+import Select from 'primevue/select'
+import Checkbox from 'primevue/checkbox'
 
 const props = defineProps<{ workspace: Workspace }>()
 const editing = ref<UnitOfMeasure | null>(null)
@@ -17,6 +19,7 @@ const showHelp = ref(localStorage.getItem('ypy.units.help') !== 'hidden')
 const showFilters = ref(true)
 const showFormInfo = ref(false)
 const filters = reactive({ codigo: '', nombre: '', dimension: '', fraction: 'all' })
+const fractionOptions = [{ label: 'Todas', value: 'all' }, { label: 'Admite fracciones', value: 'true' }, { label: 'Solo enteros', value: 'false' }]
 const error = ref('')
 const deleteError = ref('')
 const pendingDelete = ref<UnitOfMeasure | null>(null)
@@ -123,7 +126,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <div class="unit-table-scroll" tabindex="0" role="region" aria-label="Listado de unidades">
         <table class="unit-table">
           <caption class="sr-only">Unidades de medida, página {{ page }} de {{ pageCount }}</caption>
-          <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Dimensión</th><th scope="col">Fracciones</th><th scope="col" class="row-actions">Acciones</th></tr><tr v-if="showFilters" class="column-filters-row"><th><label class="sr-only" for="unit-code-filter">Código contiene</label><InputText id="unit-code-filter" v-model="filters.codigo" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-name-filter">Nombre contiene</label><InputText id="unit-name-filter" v-model="filters.nombre" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-dimension-filter">Dimensión contiene</label><InputText id="unit-dimension-filter" v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></th><th><label class="sr-only" for="unit-fraction-filter">Fracciones</label><select id="unit-fraction-filter" v-model="filters.fraction"><option value="all">Todas</option><option value="true">Admite fracciones</option><option value="false">Solo enteros</option></select></th><th class="row-actions"><span class="sr-only">Sin filtro</span></th></tr></thead>
+          <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Dimensión</th><th scope="col">Fracciones</th><th scope="col" class="row-actions">Acciones</th></tr><tr v-if="showFilters" class="column-filters-row"><th><label class="sr-only" for="unit-code-filter">Código contiene</label><InputText id="unit-code-filter" v-model="filters.codigo" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-name-filter">Nombre contiene</label><InputText id="unit-name-filter" v-model="filters.nombre" placeholder="Contiene…" /></th><th><label class="sr-only" for="unit-dimension-filter">Dimensión contiene</label><InputText id="unit-dimension-filter" v-model="filters.dimension" placeholder="Ej. PESO o VOLUMEN" /></th><th><label class="sr-only" for="unit-fraction-filter">Fracciones</label><Select input-id="unit-fraction-filter" v-model="filters.fraction" :options="fractionOptions" option-label="label" option-value="value" /></th><th class="row-actions"><span class="sr-only">Sin filtro</span></th></tr></thead>
           <tbody><tr v-if="!filtered.length"><td colspan="5" class="table-empty"><strong>{{ activeFilters ? 'No hay coincidencias' : 'Todavía no hay unidades' }}</strong><span>{{ activeFilters ? 'Cambia o limpia los filtros para ver otros registros.' : 'Selecciona Nuevo para registrar la primera unidad.' }}</span><button v-if="activeFilters" class="button secondary" @click="clearFilters">Limpiar filtros</button></td></tr><tr v-for="unit in rows" :key="unit.id">
             <td><strong>{{ unit.codigo }}</strong></td><td>{{ unit.nombre }}</td><td>{{ unit.dimension }}</td><td>{{ unit.admiteFraccion ? 'Sí' : 'No' }}</td>
             <td class="row-actions"><div class="row-buttons">
@@ -135,7 +138,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
         </table>
       </div>
       <footer class="unit-pagination">
-        <label>Filas por página<select v-model.number="pageSize"><option :value="10">10</option><option :value="25">25</option><option :value="50">50</option></select></label>
+        <label>Filas por página<Select v-model="pageSize" :options="[10, 25, 50]" /></label>
         <span role="status">{{ start }}–{{ end }} de {{ filtered.length }}</span>
         <div class="pager-actions"><button class="button secondary" :disabled="page === 1" @click="page--">Anterior</button><span>{{ page }} / {{ pageCount }}</span><button class="button secondary" :disabled="page >= pageCount" @click="page++">Siguiente</button></div>
       </footer>
@@ -155,7 +158,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
           <FormLabel for="unit-dimension" required>Dimensión</FormLabel>
           <InputText id="unit-dimension" v-model="form.dimension" maxlength="30" required :aria-describedby="showHelp ? 'unit-dimension-help' : undefined" placeholder="Ej. PESO" />
           <p v-if="showHelp" id="unit-dimension-help" class="field-help">Qué se mide: PESO para kilogramos y gramos, VOLUMEN para litros y mililitros, UNIDAD para contar piezas. Agruparlas no realiza conversiones automáticamente.</p>
-          <label class="fraction-field"><input v-model="form.admiteFraccion" type="checkbox" :aria-describedby="showHelp ? 'unit-fraction-help' : undefined" /><span>Permitir cantidades fraccionarias</span></label>
+          <label class="fraction-field"><Checkbox v-model="form.admiteFraccion" binary input-id="unit-fraction" :aria-describedby="showHelp ? 'unit-fraction-help' : undefined" /><span>Permitir cantidades fraccionarias</span></label>
           <p v-if="showHelp" id="unit-fraction-help" class="field-help">Permite cantidades como 0,5 kg o 1,25 L. Desactívalo si solo se admiten cantidades enteras.</p>
         </fieldset>
         <section class="unit-audit" aria-label="Información del registro">
